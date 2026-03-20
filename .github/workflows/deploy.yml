@@ -1,0 +1,91 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-tools-deploy
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: 22
+  PNPM_VERSION: 10
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build static site
+        run: pnpm build
+
+      - name: Create deployment bundle
+        run: tar -czf deploy-bundle.tgz dist deploy/compose.yaml deploy/Caddyfile
+
+      - name: Configure SSH
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
+
+      - name: Upload deployment bundle
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: scp deploy-bundle.tgz "$VPS_USER@$VPS_HOST:/tmp/web-tools-${GITHUB_SHA}.tgz"
+
+      - name: Deploy on VPS
+        env:
+          VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
+          VPS_DOMAIN: ${{ secrets.VPS_DOMAIN }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          deploy_root="${VPS_DEPLOY_PATH:-/opt/web-tools}"
+          ssh "$VPS_USER@$VPS_HOST" "DEPLOY_ROOT='$deploy_root' RELEASE_ID='${GITHUB_SHA}' VPS_DOMAIN='${VPS_DOMAIN}' bash -s" <<'EOF'
+          set -euo pipefail
+
+          bundle="/tmp/web-tools-${RELEASE_ID}.tgz"
+          workdir="$(mktemp -d)"
+          trap 'rm -rf "$workdir" "$bundle"' EXIT
+
+          mkdir -p "$DEPLOY_ROOT/site" "$DEPLOY_ROOT/caddy_data" "$DEPLOY_ROOT/caddy_config"
+
+          tar -xzf "$bundle" -C "$workdir"
+          find "$DEPLOY_ROOT/site" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+          cp -a "$workdir/dist/." "$DEPLOY_ROOT/site/"
+          install -m 644 "$workdir/deploy/compose.yaml" "$DEPLOY_ROOT/compose.yaml"
+          install -m 644 "$workdir/deploy/Caddyfile" "$DEPLOY_ROOT/Caddyfile"
+          install -m 600 /dev/null "$DEPLOY_ROOT/site.env"
+          printf 'DOMAIN=%s\n' "$VPS_DOMAIN" > "$DEPLOY_ROOT/site.env"
+
+          docker compose -f "$DEPLOY_ROOT/compose.yaml" --project-directory "$DEPLOY_ROOT" pull
+          docker compose -f "$DEPLOY_ROOT/compose.yaml" --project-directory "$DEPLOY_ROOT" up -d --force-recreate
+          EOF
