@@ -9,7 +9,7 @@ import {
 import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { InlineFieldError } from "@/components/inline-field-error"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -32,6 +32,9 @@ import { cn } from "@/lib/utils"
 
 const LIVE_TIMER_INTERVAL = 1000
 
+type SingleFieldErrorTarget = "timestamp" | "dateTime" | "timestampTimeZone" | "dateTimeTimeZone" | null
+type BatchFieldErrorTarget = "input" | "timeZone" | null
+
 function getInitialTimeZone() {
   if (typeof window === "undefined") {
     return "UTC"
@@ -42,6 +45,24 @@ function getInitialTimeZone() {
 
 function getDefaultDateTimeInput(timeZone: string) {
   return formatTimestampForDisplay(Date.now(), timeZone)
+}
+
+function getSingleFieldErrorTarget(
+  errorKey: MessageKey | null,
+  actionTarget: "timestamp-to-date" | "date-to-timestamp" | null,
+): SingleFieldErrorTarget {
+  switch (errorKey) {
+    case "timestamp.errors.emptyTimestamp":
+    case "timestamp.errors.invalidTimestamp":
+      return "timestamp"
+    case "timestamp.errors.emptyDateTime":
+    case "timestamp.errors.invalidDateTime":
+      return "dateTime"
+    case "timestamp.errors.invalidTimezone":
+      return actionTarget === "date-to-timestamp" ? "dateTimeTimeZone" : "timestampTimeZone"
+    default:
+      return null
+  }
 }
 
 export function TimestampToolSurface() {
@@ -61,6 +82,7 @@ export function TimestampToolSurface() {
   const [timestampToDateResult, setTimestampToDateResult] = useState("")
   const [dateToTimestampResult, setDateToTimestampResult] = useState("")
   const [singleErrorKey, setSingleErrorKey] = useState<MessageKey | null>(null)
+  const [singleErrorTarget, setSingleErrorTarget] = useState<"timestamp-to-date" | "date-to-timestamp" | null>(null)
   const [singleResultHintKey, setSingleResultHintKey] = useState<MessageKey | null>(null)
   const [singleResultHintTarget, setSingleResultHintTarget] = useState<"timestamp-to-date" | "date-to-timestamp" | null>(null)
   const [batchInput, setBatchInput] = useState("")
@@ -70,8 +92,27 @@ export function TimestampToolSurface() {
 
   const supportedTimeZones = useMemo(() => getSupportedTimeZones(), [])
   const liveTimestamp = getCurrentTimestampValue(now, currentUnit)
-  const currentAlert = singleErrorKey ? t(singleErrorKey) : null
-  const batchAlert = batchErrorKey ? t(batchErrorKey) : null
+  const singleFieldErrorTarget = getSingleFieldErrorTarget(singleErrorKey, singleErrorTarget)
+  const batchFieldErrorTarget: BatchFieldErrorTarget =
+    batchErrorKey === "timestamp.errors.invalidTimezone"
+      ? "timeZone"
+      : batchErrorKey === "timestamp.errors.emptyBatch"
+        ? "input"
+        : null
+
+  const timestampErrorMessage = singleFieldErrorTarget === "timestamp" && singleErrorKey ? t(singleErrorKey) : null
+  const dateTimeErrorMessage = singleFieldErrorTarget === "dateTime" && singleErrorKey ? t(singleErrorKey) : null
+  const timestampTimeZoneErrorMessage =
+    singleFieldErrorTarget === "timestampTimeZone" && singleErrorKey ? t(singleErrorKey) : null
+  const dateTimeTimeZoneErrorMessage =
+    singleFieldErrorTarget === "dateTimeTimeZone" && singleErrorKey ? t(singleErrorKey) : null
+  const timestampResultErrorMessage =
+    singleResultHintTarget === "timestamp-to-date" && singleResultHintKey ? t(singleResultHintKey) : null
+  const dateResultErrorMessage =
+    singleResultHintTarget === "date-to-timestamp" && singleResultHintKey ? t(singleResultHintKey) : null
+  const batchInputErrorMessage = batchFieldErrorTarget === "input" && batchErrorKey ? t(batchErrorKey) : null
+  const batchTimeZoneErrorMessage = batchFieldErrorTarget === "timeZone" && batchErrorKey ? t(batchErrorKey) : null
+  const batchResultErrorMessage = batchResultHintKey ? t(batchResultHintKey) : null
 
   useEffect(() => {
     if (!isLive) {
@@ -93,6 +134,7 @@ export function TimestampToolSurface() {
   ) {
     if (!value.trim()) {
       setInlineHint?.("errors.nothingToCopy")
+      setError(null)
       return
     }
 
@@ -102,7 +144,8 @@ export function TimestampToolSurface() {
       setError(null)
       setInlineHint?.(null)
     } catch {
-      setError("errors.copyFailed")
+      toast.error(t("errors.copyFailed"))
+      setError(null)
     }
   }
 
@@ -112,12 +155,16 @@ export function TimestampToolSurface() {
     if (result.ok) {
       setTimestampToDateResult(result.value)
       setSingleErrorKey(null)
+      setSingleErrorTarget(null)
       setSingleResultHintKey(null)
       setSingleResultHintTarget(null)
       return
     }
 
     setSingleErrorKey(result.errorKey)
+    setSingleErrorTarget("timestamp-to-date")
+    setSingleResultHintKey(null)
+    setSingleResultHintTarget(null)
     setTimestampToDateResult("")
   }
 
@@ -127,12 +174,16 @@ export function TimestampToolSurface() {
     if (result.ok) {
       setDateToTimestampResult(result.value)
       setSingleErrorKey(null)
+      setSingleErrorTarget(null)
       setSingleResultHintKey(null)
       setSingleResultHintTarget(null)
       return
     }
 
     setSingleErrorKey(result.errorKey)
+    setSingleErrorTarget("date-to-timestamp")
+    setSingleResultHintKey(null)
+    setSingleResultHintTarget(null)
     setDateToTimestampResult("")
   }
 
@@ -231,58 +282,63 @@ export function TimestampToolSurface() {
 
           {mode === "single" ? (
             <div className="flex min-h-0 flex-1 flex-col gap-4">
-              {currentAlert ? (
-                <Alert variant="destructive">
-                  <AlertTitle>{t("alert.invalidInput")}</AlertTitle>
-                  <AlertDescription>{currentAlert}</AlertDescription>
-                </Alert>
-              ) : null}
-
               <div className="space-y-4 rounded-xl border border-border/60 bg-background/65 p-4 shadow-sm">
                 <div className="flex items-center gap-2 text-sm font-semibold">
                   <Clock3 className="size-4 text-muted-foreground" />
                   <span>{t("timestamp.sections.timestampToDate")}</span>
                 </div>
-                <div className="grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_8rem_auto_minmax(0,1.25fr)_auto_12rem]">
-                  <input
-                    value={timestampInput}
-                    onChange={(event) => {
-                      setTimestampInput(event.target.value)
-                      if (singleResultHintTarget === "timestamp-to-date") {
-                        setSingleResultHintKey(null)
-                      }
-                    }}
-                    placeholder={t("timestamp.placeholders.timestamp")}
-                    className="timestamp-input"
-                    spellCheck={false}
-                  />
+                <div className="grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_8rem_auto_minmax(0,1.25fr)_auto_12rem] lg:items-start">
+                  <div className="space-y-2 lg:col-start-1">
+                    <input
+                      value={timestampInput}
+                      onChange={(event) => {
+                        setTimestampInput(event.target.value)
+                        setSingleErrorKey(null)
+                        setSingleErrorTarget(null)
+                      }}
+                      placeholder={t("timestamp.placeholders.timestamp")}
+                      aria-invalid={Boolean(timestampErrorMessage)}
+                      aria-describedby={timestampErrorMessage ? "timestamp-single-timestamp-error" : undefined}
+                      className="timestamp-input"
+                      spellCheck={false}
+                    />
+                    {timestampErrorMessage ? (
+                      <InlineFieldError id="timestamp-single-timestamp-error" message={timestampErrorMessage} />
+                    ) : null}
+                  </div>
                   <select
                     value={singleTimestampUnit}
                     onChange={(event) => setSingleTimestampUnit(event.target.value as TimestampUnit)}
-                    className="timestamp-select"
+                    className="timestamp-select lg:col-start-2"
                   >
                     <option value="milliseconds">{t("timestamp.unit.milliseconds")}</option>
                     <option value="seconds">{t("timestamp.unit.seconds")}</option>
                   </select>
-                  <Button type="button" className="gap-2" onClick={handleTimestampToDate}>
+                  <Button type="button" className="gap-2 lg:col-start-3" onClick={handleTimestampToDate}>
                     <WandSparkles className="size-4" />
                     {t("timestamp.actions.convert")}
                   </Button>
-                  <input
-                    value={timestampToDateResult}
-                    readOnly
-                    placeholder={
-                      singleResultHintTarget === "timestamp-to-date" && singleResultHintKey
-                        ? t(singleResultHintKey)
-                        : t("timestamp.placeholders.result")
-                    }
-                    className="timestamp-input"
-                  />
+                  <div className="space-y-2 lg:col-start-4">
+                    <input
+                      value={timestampToDateResult}
+                      readOnly
+                      placeholder={t("timestamp.placeholders.result")}
+                      aria-invalid={Boolean(timestampResultErrorMessage)}
+                      aria-describedby={timestampResultErrorMessage ? "timestamp-single-timestamp-result-error" : undefined}
+                      className="timestamp-input"
+                    />
+                    {timestampResultErrorMessage ? (
+                      <InlineFieldError
+                        id="timestamp-single-timestamp-result-error"
+                        message={timestampResultErrorMessage}
+                      />
+                    ) : null}
+                  </div>
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    className="shrink-0 self-center"
+                    className="shrink-0 self-center lg:col-start-5"
                     aria-label={t("timestamp.actions.copyResult")}
                     title={t("timestamp.actions.copyResult")}
                     onClick={() => {
@@ -297,62 +353,93 @@ export function TimestampToolSurface() {
                   >
                     <Copy className="size-4" />
                   </Button>
-                  <select
-                    value={singleTimeZone}
-                    onChange={(event) => setSingleTimeZone(event.target.value)}
-                    className="timestamp-select"
-                  >
-                    {supportedTimeZones.map((timeZone) => (
-                      <option key={timeZone} value={timeZone}>
-                        {timeZone}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="space-y-2 lg:col-start-6">
+                    <select
+                      value={singleTimeZone}
+                      onChange={(event) => {
+                        setSingleTimeZone(event.target.value)
+                        setSingleErrorKey(null)
+                        setSingleErrorTarget(null)
+                      }}
+                      aria-invalid={Boolean(timestampTimeZoneErrorMessage)}
+                      aria-describedby={timestampTimeZoneErrorMessage ? "timestamp-single-tz-error" : undefined}
+                      className="timestamp-select"
+                    >
+                      {supportedTimeZones.map((timeZone) => (
+                        <option key={timeZone} value={timeZone}>
+                          {timeZone}
+                        </option>
+                      ))}
+                    </select>
+                    {timestampTimeZoneErrorMessage ? (
+                      <InlineFieldError id="timestamp-single-tz-error" message={timestampTimeZoneErrorMessage} />
+                    ) : null}
+                  </div>
                 </div>
 
-                <div className="grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_12rem_auto_minmax(0,1.05fr)_auto_8rem]">
-                  <input
-                    value={dateTimeInput}
-                    onChange={(event) => {
-                      setDateTimeInput(event.target.value)
-                      if (singleResultHintTarget === "date-to-timestamp") {
-                        setSingleResultHintKey(null)
-                      }
-                    }}
-                    placeholder={t("timestamp.placeholders.dateTime")}
-                    className="timestamp-input"
-                    spellCheck={false}
-                  />
-                  <select
-                    value={singleTimeZone}
-                    onChange={(event) => setSingleTimeZone(event.target.value)}
-                    className="timestamp-select"
-                  >
-                    {supportedTimeZones.map((timeZone) => (
-                      <option key={timeZone} value={timeZone}>
-                        {timeZone}
-                      </option>
-                    ))}
-                  </select>
-                  <Button type="button" className="gap-2" onClick={handleDateToTimestamp}>
+                <div className="grid gap-3 lg:grid-cols-[minmax(0,1.15fr)_12rem_auto_minmax(0,1.05fr)_auto_8rem] lg:items-start">
+                  <div className="space-y-2 lg:col-start-1">
+                    <input
+                      value={dateTimeInput}
+                      onChange={(event) => {
+                        setDateTimeInput(event.target.value)
+                        setSingleErrorKey(null)
+                        setSingleErrorTarget(null)
+                      }}
+                      placeholder={t("timestamp.placeholders.dateTime")}
+                      aria-invalid={Boolean(dateTimeErrorMessage)}
+                      aria-describedby={dateTimeErrorMessage ? "timestamp-single-date-error" : undefined}
+                      className="timestamp-input"
+                      spellCheck={false}
+                    />
+                    {dateTimeErrorMessage ? (
+                      <InlineFieldError id="timestamp-single-date-error" message={dateTimeErrorMessage} />
+                    ) : null}
+                  </div>
+                  <div className="space-y-2 lg:col-start-2">
+                    <select
+                      value={singleTimeZone}
+                      onChange={(event) => {
+                        setSingleTimeZone(event.target.value)
+                        setSingleErrorKey(null)
+                        setSingleErrorTarget(null)
+                      }}
+                      aria-invalid={Boolean(dateTimeTimeZoneErrorMessage)}
+                      aria-describedby={dateTimeTimeZoneErrorMessage ? "timestamp-single-date-tz-error" : undefined}
+                      className="timestamp-select"
+                    >
+                      {supportedTimeZones.map((timeZone) => (
+                        <option key={timeZone} value={timeZone}>
+                          {timeZone}
+                        </option>
+                      ))}
+                    </select>
+                    {dateTimeTimeZoneErrorMessage ? (
+                      <InlineFieldError id="timestamp-single-date-tz-error" message={dateTimeTimeZoneErrorMessage} />
+                    ) : null}
+                  </div>
+                  <Button type="button" className="gap-2 lg:col-start-3" onClick={handleDateToTimestamp}>
                     <WandSparkles className="size-4" />
                     {t("timestamp.actions.convert")}
                   </Button>
-                  <input
-                    value={dateToTimestampResult}
-                    readOnly
-                    placeholder={
-                      singleResultHintTarget === "date-to-timestamp" && singleResultHintKey
-                        ? t(singleResultHintKey)
-                        : t("timestamp.placeholders.result")
-                    }
-                    className="timestamp-input"
-                  />
+                  <div className="space-y-2 lg:col-start-4">
+                    <input
+                      value={dateToTimestampResult}
+                      readOnly
+                      placeholder={t("timestamp.placeholders.result")}
+                      aria-invalid={Boolean(dateResultErrorMessage)}
+                      aria-describedby={dateResultErrorMessage ? "timestamp-single-date-result-error" : undefined}
+                      className="timestamp-input"
+                    />
+                    {dateResultErrorMessage ? (
+                      <InlineFieldError id="timestamp-single-date-result-error" message={dateResultErrorMessage} />
+                    ) : null}
+                  </div>
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    className="shrink-0 self-center"
+                    className="shrink-0 self-center lg:col-start-5"
                     aria-label={t("timestamp.actions.copyResult")}
                     title={t("timestamp.actions.copyResult")}
                     onClick={() => {
@@ -370,7 +457,7 @@ export function TimestampToolSurface() {
                   <select
                     value={singleDateResultUnit}
                     onChange={(event) => setSingleDateResultUnit(event.target.value as TimestampUnit)}
-                    className="timestamp-select"
+                    className="timestamp-select lg:col-start-6"
                   >
                     <option value="seconds">{t("timestamp.unit.seconds")}</option>
                     <option value="milliseconds">{t("timestamp.unit.milliseconds")}</option>
@@ -380,14 +467,7 @@ export function TimestampToolSurface() {
             </div>
           ) : (
             <div className="flex min-h-0 flex-1 flex-col gap-4">
-              {batchAlert ? (
-                <Alert variant="destructive">
-                  <AlertTitle>{t("alert.invalidInput")}</AlertTitle>
-                  <AlertDescription>{batchAlert}</AlertDescription>
-                </Alert>
-              ) : null}
-
-              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-muted/35 p-3">
+              <div className="flex flex-wrap items-start gap-2 rounded-xl border border-border/60 bg-muted/35 p-3">
                 <div data-slot="button-group" className="inline-flex rounded-xl border border-border/70 bg-background/75 p-1">
                   {([
                     ["timestamp-to-date", "timestamp.batch.timestampToDate"],
@@ -417,17 +497,27 @@ export function TimestampToolSurface() {
                   <option value="seconds">{t("timestamp.unit.seconds")}</option>
                 </select>
 
-                <select
-                  value={batchTimeZone}
-                  onChange={(event) => setBatchTimeZone(event.target.value)}
-                  className="timestamp-select w-auto min-w-44"
-                >
-                  {supportedTimeZones.map((timeZone) => (
-                    <option key={timeZone} value={timeZone}>
-                      {timeZone}
-                    </option>
-                  ))}
-                </select>
+                <div className="space-y-2">
+                  <select
+                    value={batchTimeZone}
+                    onChange={(event) => {
+                      setBatchTimeZone(event.target.value)
+                      setBatchErrorKey(null)
+                    }}
+                    aria-invalid={Boolean(batchTimeZoneErrorMessage)}
+                    aria-describedby={batchTimeZoneErrorMessage ? "timestamp-batch-timezone-error" : undefined}
+                    className="timestamp-select w-auto min-w-44"
+                  >
+                    {supportedTimeZones.map((timeZone) => (
+                      <option key={timeZone} value={timeZone}>
+                        {timeZone}
+                      </option>
+                    ))}
+                  </select>
+                  {batchTimeZoneErrorMessage ? (
+                    <InlineFieldError id="timestamp-batch-timezone-error" message={batchTimeZoneErrorMessage} />
+                  ) : null}
+                </div>
 
                 <Button type="button" className="gap-2" onClick={handleConvertBatch}>
                   <WandSparkles className="size-4" />
@@ -446,16 +536,21 @@ export function TimestampToolSurface() {
                     value={batchInput}
                     onChange={(event) => {
                       setBatchInput(event.target.value)
-                      setBatchResultHintKey(null)
+                      setBatchErrorKey(null)
                     }}
                     placeholder={t(
                       batchDirection === "timestamp-to-date"
                         ? "timestamp.placeholders.batchTimestamp"
                         : "timestamp.placeholders.batchDateTime",
                     )}
+                    aria-invalid={Boolean(batchInputErrorMessage)}
+                    aria-describedby={batchInputErrorMessage ? "timestamp-batch-input-error" : undefined}
                     className="min-h-[20rem] flex-1 resize-none overflow-auto border-0 bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0 xl:min-h-0"
                     spellCheck={false}
                   />
+                  {batchInputErrorMessage ? (
+                    <InlineFieldError id="timestamp-batch-input-error" message={batchInputErrorMessage} />
+                  ) : null}
                 </section>
 
                 <section className="flex min-h-0 flex-col rounded-xl border border-border/60 bg-background/65 p-3 shadow-sm">
@@ -477,12 +572,17 @@ export function TimestampToolSurface() {
                     id="timestamp-batch-output"
                     value={batchResult}
                     readOnly
-                    placeholder={batchResultHintKey ? t(batchResultHintKey) : t("timestamp.placeholders.result")}
+                    placeholder={t("timestamp.placeholders.result")}
+                    aria-invalid={Boolean(batchResultErrorMessage)}
+                    aria-describedby={batchResultErrorMessage ? "timestamp-batch-result-error" : undefined}
                     className={cn(
                       "min-h-[20rem] flex-1 resize-none overflow-auto border-0 bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0 xl:min-h-0",
                       batchResult && "text-foreground",
                     )}
                   />
+                  {batchResultErrorMessage ? (
+                    <InlineFieldError id="timestamp-batch-result-error" message={batchResultErrorMessage} />
+                  ) : null}
                 </section>
               </div>
             </div>

@@ -417,10 +417,15 @@
     background-repeat: no-repeat;
     padding-right: 2.25rem;
   }
-
   .timestamp-select:disabled,
   .timestamp-input:read-only {
     background-color: color-mix(in oklch, oklch(var(--muted)) 72%, transparent);
+  }
+
+  .timestamp-input[aria-invalid="true"],
+  .timestamp-select[aria-invalid="true"] {
+    border-color: oklch(var(--destructive));
+    box-shadow: 0 0 0 3px color-mix(in oklch, oklch(var(--destructive)) 16%, transparent);
   }
 
   ::selection {

@@ -17,6 +17,8 @@ import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 
 import { JsonOutput } from "@/components/json-output"
+import { JwtToolSurface } from "@/components/jwt-tool-surface"
+import { InlineFieldError } from "@/components/inline-field-error"
 import { SettingsSurface } from "@/components/settings-surface"
 import { TimestampToolSurface } from "@/components/timestamp-tool-surface"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -46,16 +48,17 @@ const MAX_HISTORY_ITEMS = 12
 const MAX_RECORD_ITEMS = 20
 
 type HistoryAction = "format" | "minify" | "unescape" | "escape" | "clear"
-type ToolId = "json" | "timestamp"
+type ToolId = "json" | "timestamp" | "jwt"
 
 const DEFAULT_TOOL: ToolId = "json"
 const TOOL_HASH_ROUTES: Record<ToolId, string> = {
   json: "#/json",
   timestamp: "#/timestamp",
+  jwt: "#/jwt",
 }
 
 function isToolId(value: string): value is ToolId {
-  return value === "json" || value === "timestamp"
+  return value === "json" || value === "timestamp" || value === "jwt"
 }
 
 function getToolFromHash(hash: string): ToolId {
@@ -177,6 +180,12 @@ function createSnapshot(value: string): SnapshotItem {
     value,
     createdAt: new Date().toISOString(),
   }
+}
+
+function isJsonSourceErrorKey(
+  key: MessageKey | null,
+): key is "errors.inputEmpty" | "errors.expectedJsonStringLiteral" | "errors.nothingToSave" {
+  return key === "errors.inputEmpty" || key === "errors.expectedJsonStringLiteral" || key === "errors.nothingToSave"
 }
 
 function App() {
@@ -318,13 +327,8 @@ function App() {
       await navigator.clipboard.writeText(source)
       toast.success(t("toast.copySuccess"))
       clearError()
-    } catch (err) {
-      if (err instanceof Error) {
-        setErrorKey(null)
-        setErrorText(err.message)
-      } else {
-        setTranslatedError("errors.copyFailed")
-      }
+    } catch {
+      toast.error(t("errors.copyFailed"))
     }
   }
 
@@ -355,6 +359,13 @@ function App() {
   const displayedError = errorKey ? t(errorKey) : errorText
   const jsonTreeValue = parsedSource.ok ? source : ""
   const recordsSidebarLabel = t(isRecordsSidebarCollapsed ? "records.expand" : "records.collapse")
+  const sourceInlineErrorMessage = sourceInlineHintKey
+    ? t(sourceInlineHintKey)
+    : isJsonSourceErrorKey(errorKey)
+      ? t(errorKey)
+      : errorText
+  const hasSourceInlineError = Boolean(sourceInlineErrorMessage)
+  const hasJsonTopLevelError = !hasSourceInlineError && Boolean(displayedError)
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
@@ -375,6 +386,7 @@ function App() {
               {([
                 ["json", "tools.json"],
                 ["timestamp", "tools.timestamp"],
+                ["jwt", "tools.jwt"],
               ] as const).map(([value, labelKey]) => (
                 <Button
                   key={value}
@@ -544,7 +556,7 @@ function App() {
           <div className="flex h-full min-h-0 w-full flex-col px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
             {selectedTool === "json" ? (
               <>
-                {displayedError ? (
+                {hasJsonTopLevelError ? (
                   <Alert variant="destructive" className="mb-4">
                     <AlertTitle>{t("alert.invalidInput")}</AlertTitle>
                     <AlertDescription>{displayedError}</AlertDescription>
@@ -586,7 +598,12 @@ function App() {
                     </div>
 
                     <div className="grid min-h-0 flex-1 gap-4 xl:grid-cols-2">
-                      <section className="flex min-h-0 flex-col rounded-xl border border-border/60 bg-background/65 p-3 shadow-sm">
+                      <section
+                        className={cn(
+                          "flex min-h-0 flex-col rounded-xl border border-border/60 bg-background/65 p-3 shadow-sm",
+                          hasSourceInlineError && "border-destructive/60",
+                        )}
+                      >
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex min-w-0 items-center gap-2">
                             <Label htmlFor="json-source">{t("labels.source")}</Label>
@@ -667,12 +684,15 @@ function App() {
                           value={source}
                           onChange={(event) => {
                             setSource(event.target.value)
-                            setSourceInlineHintKey(null)
+                            clearError()
                           }}
-                          placeholder={sourceInlineHintKey ? t(sourceInlineHintKey) : t("placeholders.input")}
+                          placeholder={t("placeholders.input")}
+                          aria-invalid={hasSourceInlineError}
+                          aria-describedby={hasSourceInlineError ? "json-source-error" : undefined}
                           className="min-h-[20rem] flex-1 resize-none overflow-auto border-0 bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0 xl:min-h-0"
                           spellCheck={false}
                         />
+                        {hasSourceInlineError ? <InlineFieldError id="json-source-error" message={sourceInlineErrorMessage} /> : null}
                       </section>
 
                       <section className="flex min-h-0 flex-col rounded-xl border border-border/60 bg-background/65 p-3 shadow-sm">
@@ -697,8 +717,10 @@ function App() {
                   </CardContent>
                 </Card>
               </>
-            ) : (
+            ) : selectedTool === "timestamp" ? (
               <TimestampToolSurface />
+            ) : (
+              <JwtToolSurface />
             )}
           </div>
         </main>
