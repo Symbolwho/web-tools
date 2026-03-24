@@ -14,6 +14,7 @@ import {
   WrapText,
 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
+import { useTheme } from "next-themes"
 import { toast } from "sonner"
 
 import { JsonOutput } from "@/components/json-output"
@@ -21,6 +22,7 @@ import { JwtToolSurface } from "@/components/jwt-tool-surface"
 import { InlineFieldError } from "@/components/inline-field-error"
 import { SettingsSurface } from "@/components/settings-surface"
 import { TimestampToolSurface } from "@/components/timestamp-tool-surface"
+import { ToolboxLogo } from "@/components/toolbox-logo"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -38,7 +40,49 @@ import {
   unescapeJsonString,
   type JsonToolResult,
 } from "@/lib/json-tools"
+import { useThemeColor } from "@/lib/theme"
 import { cn } from "@/lib/utils"
+
+const DYNAMIC_FAVICON_ID = "app-favicon"
+
+function createToolboxFaviconSvg(primaryColor: string) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none"><path d="M344.792 518.575L303.4 477.184a26.947 26.947 0 0 1 38.13-38.13l60.174 60.173a26.947 26.947 0 0 1 0.27 37.834L114.392 833.16a26.947 26.947 0 0 0 0.27 37.834l68.984 68.958a26.947 26.947 0 0 0 38.077 0l291.301-291.3a26.947 26.947 0 0 1 38.104 0l146.324 146.323a26.947 26.947 0 1 1-38.104 38.13L532.076 705.833 259.853 978.055a80.842 80.842 0 0 1-114.337 0L76.53 909.096a80.842 80.842 0 0 1-0.809-113.475l269.043-277.046z m473.546 155.54a26.947 26.947 0 1 1-38.104 38.104L597.288 529.273a26.947 26.947 0 0 1 0-38.103l148.13-148.103a26.947 26.947 0 0 1 15.36-7.653l88.603-12.18 89.627-170.927-56.697-60.39-167.37 97.254-16.546 85.53a26.947 26.947 0 0 1-7.384 13.96l-148.13 148.102a26.947 26.947 0 0 1-38.103 0l-77.474-77.474a26.947 26.947 0 1 1 38.104-38.103l58.422 58.422 123.23-123.23 17.273-89.466a26.947 26.947 0 0 1 12.935-18.19l196.5-114.175a26.947 26.947 0 0 1 33.173 4.85l84.48 90.004a26.947 26.947 0 0 1 4.203 30.963l-104.96 200.165a26.947 26.947 0 0 1-20.21 14.201l-93.346 12.854-122.637 122.637 163.867 163.894z" fill="${primaryColor}"/><path d="M610.816 784.573a26.947 26.947 0 0 1 38.104-38.104l52.089 52.09a26.947 26.947 0 0 1-38.104 38.103l-52.089-52.09zM368.371 543.42a26.947 26.947 0 1 1 37.995-38.185L705.671 803.22a26.947 26.947 0 0 1 7.814 21.45 111.373 111.373 0 0 0 31.475 87.471 107.79 107.79 0 1 0 68.662-183.727c-2.129 0.135-3.934 0.081-5.578-0.054a26.947 26.947 0 0 1-19.537-7.868L485.24 417.954a26.947 26.947 0 1 1 38.05-38.158l295.181 294.481A161.684 161.684 0 1 1 706.83 950.272a165.16 165.16 0 0 1-47.642-117.275L368.37 543.421z" fill="${primaryColor}"/><path d="M783.076 874.036a53.895 53.895 0 1 0 76.22-76.219 53.895 53.895 0 1 0-76.22 76.219zM421.807 588.989a26.947 26.947 0 0 1 38.104 38.13L221.723 865.28a26.947 26.947 0 1 1-38.104-38.104L421.807 588.99z m81.597-229.808a26.947 26.947 0 1 1-38.104 38.104l-37.996-37.996a26.947 26.947 0 0 1-5.847-29.345c0.808-1.914 1.05-2.426 3.368-7.06l0.189-0.432c0.754-1.509 1.24-2.506 1.159-2.263a188.632 188.632 0 0 0-43.601-198.818 187.877 187.877 0 0 0-129.698-55.215 189.736 189.736 0 0 0-73.135 13.15l-2.506 0.97-1.752 0.728a26.947 26.947 0 0 1-21.073-49.61c1.887-0.809 1.887-0.809 3.423-1.402l2.102-0.808a242.068 242.068 0 0 1 93.992-16.896 241.772 241.772 0 0 1 166.723 70.98 242.526 242.526 0 0 1 57.722 250.88l25.007 25.033zM25.869 160.013a26.947 26.947 0 0 1 49.61 21.02 187.284 187.284 0 0 0-14.74 65.374 188.039 188.039 0 0 0 55.054 141.743 188.632 188.632 0 0 0 44.463 33.037 26.947 26.947 0 1 1-25.411 47.536 242.526 242.526 0 0 1-57.129-42.47A241.907 241.907 0 0 1 6.9 244.035a243.443 243.443 0 0 1 18.97-84.022z m224.337 337.274a26.947 26.947 0 0 1-0.215-53.895 189.17 189.17 0 0 0 61.79-10.644c4.366-1.51 7.168-2.21 10.94-1.563a26.947 26.947 0 0 1 18.81 7.895l33.145 33.146a26.947 26.947 0 0 1-38.103 38.13l-21.99-22.016a243.308 243.308 0 0 1-64.377 8.947z" fill="${primaryColor}"/><path d="M148.48 77.824a26.947 26.947 0 1 1 38.104-38.104l161.792 161.82a26.947 26.947 0 0 1 7.087 25.6l-22.986 91.35a26.947 26.947 0 0 1-19.564 19.565L221.56 361.04a26.947 26.947 0 0 1-25.6-7.06L30.343 188.362a26.947 26.947 0 1 1 38.13-38.103L223.26 305.044l60.901-15.306 15.306-60.9L148.48 77.823z" fill="${primaryColor}"/></svg>`
+}
+
+function createFaviconDataUrl(primaryColor: string) {
+  return `data:image/svg+xml,${encodeURIComponent(createToolboxFaviconSvg(primaryColor))}`
+}
+
+function getPrimaryColorValue() {
+  const rootStyles = getComputedStyle(document.documentElement)
+  const primaryValue = rootStyles.getPropertyValue("--primary").trim()
+
+  if (!primaryValue) {
+    return "oklch(0.623 0.214 259.815)"
+  }
+
+  return primaryValue.startsWith("oklch(") ? primaryValue : `oklch(${primaryValue})`
+}
+
+function getOrCreateFaviconLink() {
+  const existingLink = document.querySelector<HTMLLinkElement>('link[rel~="icon"]')
+  if (existingLink) {
+    existingLink.id = DYNAMIC_FAVICON_ID
+    return existingLink
+  }
+
+  const faviconLink = document.createElement("link")
+  faviconLink.id = DYNAMIC_FAVICON_ID
+  faviconLink.rel = "icon"
+  faviconLink.type = "image/svg+xml"
+  document.head.appendChild(faviconLink)
+  return faviconLink
+}
+
+function syncFavicon() {
+  const faviconLink = getOrCreateFaviconLink()
+  faviconLink.href = createFaviconDataUrl(getPrimaryColorValue())
+}
 
 const SOURCE_KEY = "web-tools:source"
 const HISTORY_KEY = "web-tools:history"
@@ -189,6 +233,8 @@ function isJsonSourceErrorKey(
 }
 
 function App() {
+  const { resolvedTheme } = useTheme()
+  const { colorTheme } = useThemeColor()
   const { locale, t } = useI18n()
   const [selectedTool, setSelectedTool] = useState<ToolId>(getInitialTool)
   const [source, setSource] = useState(() => {
@@ -235,6 +281,20 @@ function App() {
   useEffect(() => {
     localStorage.setItem(RECORDS_SIDEBAR_KEY, isRecordsSidebarCollapsed ? "true" : "false")
   }, [isRecordsSidebarCollapsed])
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      syncFavicon()
+    })
+
+    return () => {
+      window.cancelAnimationFrame(frameId)
+    }
+  }, [resolvedTheme, colorTheme])
 
   const parsedSource = useMemo(() => parseJsonValue(source), [source])
 
@@ -372,8 +432,8 @@ function App() {
       <header className="border-b border-border/70 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex min-w-0 flex-wrap items-center gap-3">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-card/80 text-sm font-semibold shadow-sm">
-              WT
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-border/70 bg-card/80 text-primary shadow-sm">
+              <ToolboxLogo className="size-5" />
             </div>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{t("app.badge")}</p>
