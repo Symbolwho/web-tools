@@ -287,6 +287,14 @@ function App() {
       return
     }
 
+    document.title = t("meta.title")
+  }, [locale, t])
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return
+    }
+
     const frameId = window.requestAnimationFrame(() => {
       syncFavicon()
     })
