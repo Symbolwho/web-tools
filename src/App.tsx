@@ -13,7 +13,7 @@ import {
   Wand2,
   WrapText,
 } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useTheme } from "next-themes"
 import { toast } from "sonner"
 
@@ -238,6 +238,8 @@ function App() {
   const { resolvedTheme } = useTheme()
   const { colorTheme } = useThemeColor()
   const { locale, t } = useI18n()
+  const themeTransitionTimeoutRef = useRef<number | null>(null)
+  const [isThemeTransitionActive, setIsThemeTransitionActive] = useState(false)
   const [selectedTool, setSelectedTool] = useState<ToolId>(getInitialTool)
   const [source, setSource] = useState(() => {
     if (typeof window === "undefined") {
@@ -301,10 +303,28 @@ function App() {
       syncFavicon()
     })
 
+    if (themeTransitionTimeoutRef.current) {
+      window.clearTimeout(themeTransitionTimeoutRef.current)
+    }
+
+    setIsThemeTransitionActive(true)
+    themeTransitionTimeoutRef.current = window.setTimeout(() => {
+      setIsThemeTransitionActive(false)
+      themeTransitionTimeoutRef.current = null
+    }, 280)
+
     return () => {
       window.cancelAnimationFrame(frameId)
     }
   }, [resolvedTheme, colorTheme])
+
+  useEffect(() => {
+    return () => {
+      if (themeTransitionTimeoutRef.current) {
+        window.clearTimeout(themeTransitionTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const parsedSource = useMemo(() => parseJsonValue(source), [source])
 
@@ -438,7 +458,11 @@ function App() {
   const hasJsonTopLevelError = !hasSourceInlineError && Boolean(displayedError)
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
+    <div className="relative flex h-screen flex-col overflow-hidden bg-background text-foreground">
+      <div
+        aria-hidden="true"
+        className={cn("theme-transition-overlay", isThemeTransitionActive && "theme-transition-overlay--active")}
+      />
       <header className="border-b border-border/70 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex min-w-0 flex-wrap items-center gap-3">

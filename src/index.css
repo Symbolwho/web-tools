@@ -43,31 +43,31 @@
   }
 
   .dark {
-    --background: 0.16 0.01 262;
+    --background: 0.205 0.012 258;
     --foreground: 0.97 0.002 255;
-    --card: 0.205 0.02 262;
+    --card: 0.245 0.018 258;
     --card-foreground: 0.97 0.002 255;
-    --popover: 0.205 0.02 262;
+    --popover: 0.25 0.018 258;
     --popover-foreground: 0.97 0.002 255;
-    --primary: 0.707 0.165 254.624;
-    --primary-foreground: 0.18 0.018 262;
-    --secondary: 0.255 0.025 258;
+    --primary: 0.73 0.15 252;
+    --primary-foreground: 0.22 0.018 258;
+    --secondary: 0.29 0.022 256;
     --secondary-foreground: 0.965 0.002 255;
-    --muted: 0.255 0.02 258;
-    --muted-foreground: 0.72 0.025 255;
-    --accent: 0.285 0.03 256;
+    --muted: 0.275 0.018 256;
+    --muted-foreground: 0.76 0.02 255;
+    --accent: 0.315 0.028 254;
     --accent-foreground: 0.97 0.002 255;
     --destructive: 0.704 0.191 22.216;
     --destructive-foreground: 0.985 0 0;
-    --border: 1 0 0 / 10%;
-    --input: 1 0 0 / 14%;
-    --ring: 0.76 0.13 250;
+    --border: 1 0 0 / 12%;
+    --input: 1 0 0 / 16%;
+    --ring: 0.78 0.11 248;
     --chart-1: 0.809 0.105 251.813;
     --chart-2: 0.623 0.214 259.815;
     --chart-3: 0.546 0.245 262.881;
     --chart-4: 0.488 0.243 264.376;
     --chart-5: 0.424 0.199 265.638;
-    --sidebar: 0.205 0.02 262;
+    --sidebar: 0.23 0.016 258;
     --sidebar-foreground: 0.97 0.002 255;
     --sidebar-primary: var(--primary);
     --sidebar-primary-foreground: var(--primary-foreground);
@@ -207,10 +207,67 @@
       radial-gradient(circle at top, color-mix(in oklch, oklch(var(--primary)) 12%, transparent) 0%, transparent 34%),
       linear-gradient(180deg, color-mix(in oklch, oklch(var(--muted)) 55%, transparent) 0%, transparent 24%);
     background-attachment: fixed;
+    transition:
+      background-color 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      color 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      background-image 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  #root,
+  [data-slot="card"],
+  [data-slot="popover-content"] {
+    transition:
+      background-color 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      color 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .theme-transition-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 60;
+    opacity: 0;
+    background:
+      radial-gradient(circle at top, color-mix(in oklch, oklch(var(--primary)) 8%, transparent) 0%, transparent 48%),
+      linear-gradient(180deg, color-mix(in oklch, oklch(var(--foreground)) 3%, transparent) 0%, transparent 100%);
+    mix-blend-mode: luminosity;
+    transition: opacity 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .theme-transition-overlay--active {
+    opacity: 0.28;
+  }
+
+  [data-slot="button"],
+  [data-slot="textarea"] {
+    transition:
+      background-color 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      color 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .history-item {
+    transition:
+      background-color 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      color 220ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   #root {
     min-height: 100vh;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      transition-duration: 0ms;
+    }
+
+    .theme-transition-overlay {
+      display: none;
+    }
   }
 
   [data-slot="card"] {

@@ -12,7 +12,6 @@ createRoot(document.getElementById("root")!).render(
       attribute="class"
       defaultTheme="light"
       enableSystem
-      disableTransitionOnChange
       storageKey="web-tools:mode"
     >
       <ThemeColorProvider>
