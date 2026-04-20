@@ -21,6 +21,7 @@ import { JsonOutput } from "@/components/json-output"
 import { JwtToolSurface } from "@/components/jwt-tool-surface"
 import { InlineFieldError } from "@/components/inline-field-error"
 import { SettingsSurface } from "@/components/settings-surface"
+import { DiffToolSurface } from "@/components/diff-tool-surface"
 import { SvgToolSurface } from "@/components/svg-tool-surface"
 import { TimestampToolSurface } from "@/components/timestamp-tool-surface"
 import { ToolboxLogo } from "@/components/toolbox-logo"
@@ -93,7 +94,7 @@ const MAX_HISTORY_ITEMS = 12
 const MAX_RECORD_ITEMS = 20
 
 type HistoryAction = "format" | "minify" | "unescape" | "escape" | "clear"
-type ToolId = "json" | "timestamp" | "jwt" | "svg"
+type ToolId = "json" | "timestamp" | "jwt" | "svg" | "diff"
 
 const DEFAULT_TOOL: ToolId = "json"
 const TOOL_HASH_ROUTES: Record<ToolId, string> = {
@@ -101,10 +102,11 @@ const TOOL_HASH_ROUTES: Record<ToolId, string> = {
   timestamp: "#/timestamp",
   jwt: "#/jwt",
   svg: "#/svg",
+  diff: "#/diff",
 }
 
 function isToolId(value: string): value is ToolId {
-  return value === "json" || value === "timestamp" || value === "jwt" || value === "svg"
+  return value === "json" || value === "timestamp" || value === "jwt" || value === "svg" || value === "diff"
 }
 
 function getToolFromHash(hash: string): ToolId {
@@ -482,6 +484,7 @@ function App() {
                 ["timestamp", "tools.timestamp"],
                 ["jwt", "tools.jwt"],
                 ["svg", "tools.svg"],
+                ["diff", "tools.diff"],
               ] as const).map(([value, labelKey]) => (
                 <Button
                   key={value}
@@ -816,6 +819,8 @@ function App() {
               <TimestampToolSurface />
             ) : selectedTool === "jwt" ? (
               <JwtToolSurface />
+            ) : selectedTool === "diff" ? (
+              <DiffToolSurface />
             ) : (
               <SvgToolSurface />
             )}
