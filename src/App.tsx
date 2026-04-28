@@ -22,6 +22,7 @@ import { JwtToolSurface } from "@/components/jwt-tool-surface"
 import { InlineFieldError } from "@/components/inline-field-error"
 import { SettingsSurface } from "@/components/settings-surface"
 import { DiffToolSurface } from "@/components/diff-tool-surface"
+import { Base64ImageToolSurface } from "@/components/base64-image-tool-surface"
 import { SvgToolSurface } from "@/components/svg-tool-surface"
 import { TimestampToolSurface } from "@/components/timestamp-tool-surface"
 import { ToolboxLogo } from "@/components/toolbox-logo"
@@ -94,7 +95,7 @@ const MAX_HISTORY_ITEMS = 12
 const MAX_RECORD_ITEMS = 20
 
 type HistoryAction = "format" | "minify" | "unescape" | "escape" | "clear"
-type ToolId = "json" | "timestamp" | "jwt" | "svg" | "diff"
+type ToolId = "json" | "timestamp" | "jwt" | "svg" | "diff" | "base64Image"
 
 const DEFAULT_TOOL: ToolId = "json"
 const TOOL_HASH_ROUTES: Record<ToolId, string> = {
@@ -103,10 +104,11 @@ const TOOL_HASH_ROUTES: Record<ToolId, string> = {
   jwt: "#/jwt",
   svg: "#/svg",
   diff: "#/diff",
+  base64Image: "#/base64-image",
 }
 
 function isToolId(value: string): value is ToolId {
-  return value === "json" || value === "timestamp" || value === "jwt" || value === "svg" || value === "diff"
+  return value === "json" || value === "timestamp" || value === "jwt" || value === "svg" || value === "diff" || value === "base64Image"
 }
 
 function getToolFromHash(hash: string): ToolId {
@@ -485,6 +487,7 @@ function App() {
                 ["jwt", "tools.jwt"],
                 ["svg", "tools.svg"],
                 ["diff", "tools.diff"],
+                ["base64Image", "tools.base64Image"],
               ] as const).map(([value, labelKey]) => (
                 <Button
                   key={value}
@@ -821,6 +824,8 @@ function App() {
               <JwtToolSurface />
             ) : selectedTool === "diff" ? (
               <DiffToolSurface />
+            ) : selectedTool === "base64Image" ? (
+              <Base64ImageToolSurface />
             ) : (
               <SvgToolSurface />
             )}
