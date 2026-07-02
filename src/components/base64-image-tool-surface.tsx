@@ -1,4 +1,4 @@
-import { Copy, Download, Eraser, ImageUp, Upload } from "lucide-react"
+import { Copy, Download, Eraser, Image as ImageIcon, ImageUp, Upload } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 
@@ -141,8 +141,9 @@ export function Base64ImageToolSurface() {
         <CardContent className="flex min-h-0 flex-1 flex-col gap-4 pt-5">
           <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-muted/35 p-3">
             <div data-slot="button-group" className="inline-flex rounded-lg border border-border/70 bg-muted/35 p-1">
-              {(["imageToBase64", "base64ToImage"] as const).map((m) => (
-                <Button key={m} type="button" size="sm" variant={mode === m ? "default" : "ghost"} className="rounded-md" onClick={() => { setMode(m); handleClear() }}>
+              {([["imageToBase64", ImageUp], ["base64ToImage", ImageIcon]] as const).map(([m, Icon]) => (
+                <Button key={m} type="button" size="sm" variant={mode === m ? "default" : "ghost"} className="gap-1.5 rounded-md" onClick={() => { setMode(m); handleClear() }}>
+                  <Icon className="size-3.5" />
                   {t(`base64Image.mode.${m}`)}
                 </Button>
               ))}

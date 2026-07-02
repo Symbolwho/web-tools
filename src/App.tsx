@@ -1,14 +1,21 @@
 import {
   Bookmark,
+  Braces,
+  CalendarDays,
   ChevronLeft,
   ChevronRight,
+  Clock3,
   Copy,
   Eraser,
+  FileCode2,
   History,
+  Image,
+  KeyRound,
   Minimize2,
   Redo2,
   Settings2,
   Sparkles,
+  SplitSquareHorizontal,
   Trash2,
   Wand2,
   WrapText,
@@ -25,6 +32,7 @@ import { DiffToolSurface } from "@/components/diff-tool-surface"
 import { Base64ImageToolSurface } from "@/components/base64-image-tool-surface"
 import { SvgToolSurface } from "@/components/svg-tool-surface"
 import { TimestampToolSurface } from "@/components/timestamp-tool-surface"
+import { DateCalcToolSurface } from "@/components/date-calc-tool-surface"
 import { ToolboxLogo } from "@/components/toolbox-logo"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -96,7 +104,17 @@ const MAX_HISTORY_ITEMS = 12
 const MAX_RECORD_ITEMS = 20
 
 type HistoryAction = "format" | "minify" | "unescape" | "escape" | "clear"
-type ToolId = "json" | "timestamp" | "jwt" | "svg" | "diff" | "base64Image"
+type ToolId = "json" | "timestamp" | "jwt" | "svg" | "diff" | "base64Image" | "dateCalc"
+
+const TOOL_ICONS: Record<ToolId, React.ComponentType<{ className?: string }>> = {
+  json: Braces,
+  timestamp: Clock3,
+  jwt: KeyRound,
+  svg: FileCode2,
+  diff: SplitSquareHorizontal,
+  base64Image: Image,
+  dateCalc: CalendarDays,
+}
 
 const DEFAULT_TOOL: ToolId = "json"
 const TOOL_HASH_ROUTES: Record<ToolId, string> = {
@@ -106,10 +124,11 @@ const TOOL_HASH_ROUTES: Record<ToolId, string> = {
   svg: "#/svg",
   diff: "#/diff",
   base64Image: "#/base64-image",
+  dateCalc: "#/date-calc",
 }
 
 function isToolId(value: string): value is ToolId {
-  return value === "json" || value === "timestamp" || value === "jwt" || value === "svg" || value === "diff" || value === "base64Image"
+  return value === "json" || value === "timestamp" || value === "jwt" || value === "svg" || value === "diff" || value === "base64Image" || value === "dateCalc"
 }
 
 function getToolFromHash(hash: string): ToolId {
@@ -495,18 +514,23 @@ function App() {
                 ["svg", "tools.svg"],
                 ["diff", "tools.diff"],
                 ["base64Image", "tools.base64Image"],
-              ] as const).map(([value, labelKey]) => (
-                <Button
-                  key={value}
-                  type="button"
-                  size="sm"
-                  variant={selectedTool === value ? "default" : "ghost"}
-                  className="min-w-0 flex-1 rounded-lg sm:flex-none"
-                  onClick={() => selectTool(value)}
-                >
-                  {t(labelKey)}
-                </Button>
-              ))}
+                ["dateCalc", "tools.dateCalc"],
+              ] as const).map(([value, labelKey]) => {
+                const Icon = TOOL_ICONS[value]
+                return (
+                  <Button
+                    key={value}
+                    type="button"
+                    size="sm"
+                    variant={selectedTool === value ? "default" : "ghost"}
+                    className="min-w-0 flex-1 gap-1.5 rounded-lg sm:flex-none"
+                    onClick={() => selectTool(value)}
+                  >
+                    <Icon className="size-3.5" />
+                    {t(labelKey)}
+                  </Button>
+                )
+              })}
             </div>
           </div>
 
@@ -830,6 +854,8 @@ function App() {
               <DiffToolSurface />
             ) : selectedTool === "base64Image" ? (
               <Base64ImageToolSurface />
+            ) : selectedTool === "dateCalc" ? (
+              <DateCalcToolSurface />
             ) : (
               <SvgToolSurface />
             )}
