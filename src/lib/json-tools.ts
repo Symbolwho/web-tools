@@ -10,7 +10,7 @@ export type JsonToolResult =
 type JsonPrimitive = string | number | boolean | null
 type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue }
 
-export type ParsedJsonResult = { ok: true; value: JsonValue } | { ok: false }
+export type ParsedJsonResult = { ok: true; value: JsonValue } | { ok: false; error?: string }
 
 function ok(value: string): JsonToolResult {
   return { ok: true, value }
@@ -94,8 +94,8 @@ export function parseJsonValue(input: string): ParsedJsonResult {
 
   try {
     return { ok: true, value: JSON.parse(input) as JsonValue }
-  } catch {
-    return { ok: false }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : undefined }
   }
 }
 

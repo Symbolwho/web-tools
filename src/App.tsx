@@ -33,7 +33,8 @@ import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
 import { Toaster } from "@/components/ui/sonner"
-import { Textarea } from "@/components/ui/textarea"
+import { JsonCodeEditor } from "@/components/json-code-editor"
+import { extractJsonErrorPosition } from "@/lib/json-error-position"
 import { useI18n, type MessageKey } from "@/lib/i18n"
 import {
   escapeJsonString,
@@ -461,6 +462,12 @@ function App() {
   const hasSourceInlineError = Boolean(sourceInlineErrorMessage)
   const hasJsonTopLevelError = !hasSourceInlineError && Boolean(displayedError)
 
+  const errorPosition = useMemo(() => {
+    if (errorText) return extractJsonErrorPosition(errorText, source)
+    if (!parsedSource.ok && parsedSource.error) return extractJsonErrorPosition(parsedSource.error, source)
+    return null
+  }, [errorText, parsedSource, source])
+
   return (
     <div className="relative flex h-screen flex-col overflow-hidden bg-background text-foreground">
       <div
@@ -780,18 +787,15 @@ function App() {
                             {stats.sourceChars} {t("labels.chars")}
                           </span>
                         </div>
-                        <Textarea
-                          id="json-source"
+                        <JsonCodeEditor
                           value={source}
-                          onChange={(event) => {
-                            setSource(event.target.value)
+                          onChange={(val) => {
+                            setSource(val)
                             clearError()
                           }}
+                          errorPosition={errorPosition}
                           placeholder={t("placeholders.input")}
-                          aria-invalid={hasSourceInlineError}
-                          aria-describedby={hasSourceInlineError ? "json-source-error" : undefined}
-                          className="min-h-[20rem] flex-1 resize-none overflow-auto border-0 bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0 xl:min-h-0"
-                          spellCheck={false}
+                          className="min-h-[20rem] flex-1 xl:min-h-0"
                         />
                         {hasSourceInlineError ? <InlineFieldError id="json-source-error" message={sourceInlineErrorMessage} /> : null}
                       </section>
