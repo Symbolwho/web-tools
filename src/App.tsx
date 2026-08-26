@@ -10,6 +10,7 @@ import {
   FileCode2,
   History,
   Image,
+  FileText,
   KeyRound,
   Minimize2,
   Redo2,
@@ -29,6 +30,7 @@ import { JwtToolSurface } from "@/components/jwt-tool-surface"
 import { InlineFieldError } from "@/components/inline-field-error"
 import { SettingsSurface } from "@/components/settings-surface"
 import { DiffToolSurface } from "@/components/diff-tool-surface"
+import { Base64TextToolSurface } from "@/components/base64-text-tool-surface"
 import { Base64ImageToolSurface } from "@/components/base64-image-tool-surface"
 import { SvgToolSurface } from "@/components/svg-tool-surface"
 import { TimestampToolSurface } from "@/components/timestamp-tool-surface"
@@ -104,7 +106,7 @@ const MAX_HISTORY_ITEMS = 12
 const MAX_RECORD_ITEMS = 20
 
 type HistoryAction = "format" | "minify" | "unescape" | "escape" | "clear"
-type ToolId = "json" | "timestamp" | "jwt" | "svg" | "diff" | "base64Image" | "dateCalc"
+type ToolId = "json" | "timestamp" | "jwt" | "svg" | "diff" | "base64Text" | "base64Image" | "dateCalc"
 
 const TOOL_ICONS: Record<ToolId, React.ComponentType<{ className?: string }>> = {
   json: Braces,
@@ -112,6 +114,7 @@ const TOOL_ICONS: Record<ToolId, React.ComponentType<{ className?: string }>> = 
   jwt: KeyRound,
   svg: FileCode2,
   diff: SplitSquareHorizontal,
+  base64Text: FileText,
   base64Image: Image,
   dateCalc: CalendarDays,
 }
@@ -123,12 +126,13 @@ const TOOL_HASH_ROUTES: Record<ToolId, string> = {
   jwt: "#/jwt",
   svg: "#/svg",
   diff: "#/diff",
+  base64Text: "#/base64-text",
   base64Image: "#/base64-image",
   dateCalc: "#/date-calc",
 }
 
 function isToolId(value: string): value is ToolId {
-  return value === "json" || value === "timestamp" || value === "jwt" || value === "svg" || value === "diff" || value === "base64Image" || value === "dateCalc"
+  return value === "json" || value === "timestamp" || value === "jwt" || value === "svg" || value === "diff" || value === "base64Text" || value === "base64Image" || value === "dateCalc"
 }
 
 function getToolFromHash(hash: string): ToolId {
@@ -513,6 +517,7 @@ function App() {
                 ["jwt", "tools.jwt"],
                 ["svg", "tools.svg"],
                 ["diff", "tools.diff"],
+                ["base64Text", "tools.base64Text"],
                 ["base64Image", "tools.base64Image"],
                 ["dateCalc", "tools.dateCalc"],
               ] as const).map(([value, labelKey]) => {
@@ -852,6 +857,8 @@ function App() {
               <JwtToolSurface />
             ) : selectedTool === "diff" ? (
               <DiffToolSurface />
+            ) : selectedTool === "base64Text" ? (
+              <Base64TextToolSurface />
             ) : selectedTool === "base64Image" ? (
               <Base64ImageToolSurface />
             ) : selectedTool === "dateCalc" ? (
