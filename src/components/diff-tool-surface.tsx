@@ -127,7 +127,7 @@ export function DiffToolSurface() {
           </div>
 
           {diffLines ? (
-            <div className="min-h-0 overflow-auto rounded-xl border border-border/60 bg-background/65 shadow-sm">
+            <div className="min-h-0 flex-1 overflow-auto rounded-xl border border-border/60 bg-background/65 shadow-sm">
               {diffLines.length === 0 ? (
                 <p className="p-4 text-sm text-muted-foreground">{t("diff.output.identical")}</p>
               ) : (
