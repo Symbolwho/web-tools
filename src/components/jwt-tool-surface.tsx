@@ -347,7 +347,7 @@ export function JwtToolSurface() {
                     setVerifyErrorKey(null)
                   }}
                   placeholder={t("jwt.placeholders.token")}
-                  className="mt-3 min-h-[7rem] resize-none overflow-auto border-0 bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0"
+                  className="mt-3 min-h-[7rem] resize-none overflow-auto rounded-none border-0 bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0"
                   spellCheck={false}
                 />
                 {decodeErrorKey ? <InlineFieldError message={t(decodeErrorKey)} /> : null}
@@ -405,7 +405,7 @@ export function JwtToolSurface() {
                       setVerifyErrorKey(null)
                     }}
                     placeholder={t("jwt.placeholders.token")}
-                    className="mt-3 min-h-[7rem] resize-none overflow-auto border-0 bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0"
+                    className="mt-3 min-h-[7rem] resize-none overflow-auto rounded-none border-0 bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0"
                     spellCheck={false}
                   />
                   {verifyErrorField === "token" && verifyErrorKey ? <InlineFieldError message={t(verifyErrorKey)} /> : null}
@@ -645,7 +645,7 @@ export function JwtToolSurface() {
                     value={encodeTokenValue}
                     readOnly
                     placeholder={t("jwt.placeholders.generatedToken")}
-                    className="mt-3 min-h-[10rem] flex-1 resize-none overflow-auto border-0 bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0 xl:min-h-0"
+                    className="mt-3 min-h-[10rem] flex-1 resize-none overflow-auto rounded-none border-0 bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0 xl:min-h-0"
                     spellCheck={false}
                   />
                 </section>

@@ -105,7 +105,7 @@ export function DiffToolSurface() {
                 value={left}
                 onChange={(e) => handleLeftChange(e.target.value)}
                 placeholder={t("diff.placeholders.left")}
-                className="mt-3 min-h-[10rem] flex-1 resize-none overflow-auto border-0 bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0 xl:min-h-0"
+                className="mt-3 min-h-[10rem] flex-1 resize-none overflow-auto rounded-none border-0 bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0 xl:min-h-0"
                 spellCheck={false}
               />
             </section>
@@ -120,7 +120,7 @@ export function DiffToolSurface() {
                 value={right}
                 onChange={(e) => handleRightChange(e.target.value)}
                 placeholder={t("diff.placeholders.right")}
-                className="mt-3 min-h-[10rem] flex-1 resize-none overflow-auto border-0 bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0 xl:min-h-0"
+                className="mt-3 min-h-[10rem] flex-1 resize-none overflow-auto rounded-none border-0 bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0 xl:min-h-0"
                 spellCheck={false}
               />
             </section>

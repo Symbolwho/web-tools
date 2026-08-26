@@ -251,7 +251,7 @@ export function JsonOutput({ value, placeholder, id, className, ...props }: Json
       id={id}
       tabIndex={0}
       className={cn(
-        "json-output flex min-h-[16rem] w-full flex-1 overflow-auto rounded-lg bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:outline-none focus-visible:ring-0",
+        "json-output flex min-h-[16rem] w-full flex-1 overflow-auto rounded-none bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:outline-none focus-visible:ring-0",
         className,
       )}
       {...props}

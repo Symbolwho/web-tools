@@ -221,7 +221,7 @@ export function Base64ImageToolSurface() {
                     value={base64Source}
                     onChange={(e) => setBase64Source(e.target.value)}
                     placeholder={t("base64Image.placeholders.base64Input")}
-                    className="mt-3 min-h-[20rem] flex-1 resize-none overflow-auto border-0 bg-transparent px-0 py-0 font-mono text-xs shadow-none focus-visible:border-transparent focus-visible:ring-0 xl:min-h-0"
+                    className="mt-3 min-h-[20rem] flex-1 resize-none overflow-auto rounded-none border-0 bg-transparent px-0 py-0 font-mono text-xs shadow-none focus-visible:border-transparent focus-visible:ring-0 xl:min-h-0"
                     spellCheck={false}
                   />
                   {previewError && <InlineFieldError id="base64-input-error" message={previewError} />}

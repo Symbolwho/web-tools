@@ -118,7 +118,7 @@ export function SvgToolSurface() {
                 placeholder={t("svg.placeholders.source")}
                 aria-invalid={hasError}
                 aria-describedby={errorMessage ? "svg-source-error" : undefined}
-                className="mt-3 min-h-[20rem] flex-1 resize-none overflow-auto border-0 bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0 xl:min-h-0"
+                className="mt-3 min-h-[20rem] flex-1 resize-none overflow-auto rounded-none border-0 bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0 xl:min-h-0"
                 spellCheck={false}
               />
               {errorMessage ? <InlineFieldError id="svg-source-error" message={errorMessage} /> : null}

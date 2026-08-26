@@ -545,7 +545,7 @@ export function TimestampToolSurface() {
                     )}
                     aria-invalid={Boolean(batchInputErrorMessage)}
                     aria-describedby={batchInputErrorMessage ? "timestamp-batch-input-error" : undefined}
-                    className="min-h-[20rem] flex-1 resize-none overflow-auto border-0 bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0 xl:min-h-0"
+                    className="min-h-[20rem] flex-1 resize-none overflow-auto rounded-none border-0 bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0 xl:min-h-0"
                     spellCheck={false}
                   />
                   {batchInputErrorMessage ? (
@@ -576,7 +576,7 @@ export function TimestampToolSurface() {
                     aria-invalid={Boolean(batchResultErrorMessage)}
                     aria-describedby={batchResultErrorMessage ? "timestamp-batch-result-error" : undefined}
                     className={cn(
-                      "min-h-[20rem] flex-1 resize-none overflow-auto border-0 bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0 xl:min-h-0",
+                      "min-h-[20rem] flex-1 resize-none overflow-auto rounded-none border-0 bg-transparent px-0 py-0 font-mono text-sm shadow-none focus-visible:border-transparent focus-visible:ring-0 xl:min-h-0",
                       batchResult && "text-foreground",
                     )}
                   />
