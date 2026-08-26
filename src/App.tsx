@@ -106,33 +106,33 @@ const MAX_HISTORY_ITEMS = 12
 const MAX_RECORD_ITEMS = 20
 
 type HistoryAction = "format" | "minify" | "unescape" | "escape" | "clear"
-type ToolId = "json" | "timestamp" | "jwt" | "svg" | "diff" | "base64Text" | "base64Image" | "dateCalc"
+type ToolId = "json" | "timestamp" | "dateCalc" | "jwt" | "svg" | "diff" | "base64Text" | "base64Image"
 
 const TOOL_ICONS: Record<ToolId, React.ComponentType<{ className?: string }>> = {
   json: Braces,
   timestamp: Clock3,
+  dateCalc: CalendarDays,
   jwt: KeyRound,
   svg: FileCode2,
   diff: SplitSquareHorizontal,
   base64Text: FileText,
   base64Image: Image,
-  dateCalc: CalendarDays,
 }
 
 const DEFAULT_TOOL: ToolId = "json"
 const TOOL_HASH_ROUTES: Record<ToolId, string> = {
   json: "#/json",
   timestamp: "#/timestamp",
+  dateCalc: "#/date-calc",
   jwt: "#/jwt",
   svg: "#/svg",
   diff: "#/diff",
   base64Text: "#/base64-text",
   base64Image: "#/base64-image",
-  dateCalc: "#/date-calc",
 }
 
 function isToolId(value: string): value is ToolId {
-  return value === "json" || value === "timestamp" || value === "jwt" || value === "svg" || value === "diff" || value === "base64Text" || value === "base64Image" || value === "dateCalc"
+  return value === "json" || value === "timestamp" || value === "dateCalc" || value === "jwt" || value === "svg" || value === "diff" || value === "base64Text" || value === "base64Image"
 }
 
 function getToolFromHash(hash: string): ToolId {
@@ -514,12 +514,12 @@ function App() {
               {([
                 ["json", "tools.json"],
                 ["timestamp", "tools.timestamp"],
+                ["dateCalc", "tools.dateCalc"],
                 ["jwt", "tools.jwt"],
                 ["svg", "tools.svg"],
                 ["diff", "tools.diff"],
                 ["base64Text", "tools.base64Text"],
                 ["base64Image", "tools.base64Image"],
-                ["dateCalc", "tools.dateCalc"],
               ] as const).map(([value, labelKey]) => {
                 const Icon = TOOL_ICONS[value]
                 return (
