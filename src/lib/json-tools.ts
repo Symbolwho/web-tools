@@ -121,19 +121,86 @@ export function minifyJson(input: string): JsonToolResult {
   }
 }
 
+const SIMPLE_ESCAPES: Record<string, string> = {
+  '"': '"',
+  "\\": "\\",
+  "/": "/",
+  b: "\b",
+  f: "\f",
+  n: "\n",
+  r: "\r",
+  t: "\t",
+}
+
+/**
+ * Decodes backslash escape sequences in arbitrary text, not just in a quoted
+ * JSON string literal. Unknown sequences (e.g. `\x`) are kept verbatim so the
+ * operation stays lossless for text it does not understand.
+ */
+function decodeEscapeSequences(input: string) {
+  let result = ""
+
+  for (let index = 0; index < input.length; index += 1) {
+    const char = input[index]
+
+    if (char !== "\\") {
+      result += char
+      continue
+    }
+
+    const next = input[index + 1]
+
+    if (next === undefined) {
+      result += char
+      break
+    }
+
+    const simple = SIMPLE_ESCAPES[next]
+    if (simple !== undefined) {
+      result += simple
+      index += 1
+      continue
+    }
+
+    if (next === "u") {
+      const hex = input.slice(index + 2, index + 6)
+      if (/^[0-9a-fA-F]{4}$/.test(hex)) {
+        result += String.fromCharCode(Number.parseInt(hex, 16))
+        index += 5
+        continue
+      }
+    }
+
+    result += char
+  }
+
+  return result
+}
+
 export function unescapeJsonString(input: string): JsonToolResult {
   if (!input.trim()) return errKey("errors.inputEmpty")
 
-  try {
-    const decoded = JSON.parse(input)
-    if (typeof decoded !== "string") {
-      return errKey("errors.expectedJsonStringLiteral")
+  const parsed = parseJsonValue(input)
+
+  // A quoted JSON string literal: decoding it is exactly what JSON.parse does.
+  if (parsed.ok) {
+    if (typeof parsed.value === "string") {
+      return ok(parsed.value)
     }
 
-    return ok(decoded)
-  } catch (e) {
-    return err(e instanceof Error ? e.message : String(e))
+    // Already valid JSON, so any remaining escapes are meaningful content.
+    return errKey("errors.expectedJsonStringLiteral")
   }
+
+  // Not valid JSON: most often escaped JSON that lost its surrounding quotes,
+  // e.g. [{\"a\":1}]. Strip the escapes textually.
+  const decoded = decodeEscapeSequences(input)
+
+  if (decoded === input) {
+    return err(parsed.error ?? "")
+  }
+
+  return ok(decoded)
 }
 
 export function escapeJsonString(input: string): JsonToolResult {
