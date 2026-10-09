@@ -6,9 +6,10 @@ import { syntaxHighlighting, defaultHighlightStyle } from "@codemirror/language"
 import type { JsonErrorPosition } from "@/lib/json-error-position"
 import { cn } from "@/lib/utils"
 
-const setErrorEffect = StateEffect.define<{ line: number } | null>()
+const setErrorEffect = StateEffect.define<JsonErrorPosition | null>()
 
 const errorLineDecoration = Decoration.line({ class: "cm-error-line" })
+const errorMarkDecoration = Decoration.mark({ class: "cm-error-mark" })
 
 const errorField = StateField.define<DecorationSet>({
   create: () => Decoration.none,
@@ -16,9 +17,21 @@ const errorField = StateField.define<DecorationSet>({
     for (const effect of tr.effects) {
       if (effect.is(setErrorEffect)) {
         if (!effect.value) return Decoration.none
-        const lineNum = Math.min(effect.value.line, tr.state.doc.lines)
-        const line = tr.state.doc.line(lineNum)
-        return Decoration.set([errorLineDecoration.range(line.from)])
+        const doc = tr.state.doc
+        const lineNum = Math.min(Math.max(effect.value.line, 1), doc.lines)
+        const line = doc.line(lineNum)
+        const ranges = [errorLineDecoration.range(line.from)]
+
+        // Underline the offending character. When the error points past the end
+        // of the line (e.g. unexpected end of input), underline the last one.
+        const col = Math.max(effect.value.column, 1)
+        let from = Math.min(line.from + col - 1, line.to)
+        if (from >= line.to) from = Math.max(line.from, line.to - 1)
+        if (from < line.to) {
+          ranges.push(errorMarkDecoration.range(from, from + 1))
+        }
+
+        return Decoration.set(ranges, true)
       }
     }
     return deco.map(tr.changes)
@@ -41,6 +54,11 @@ const editorTheme = EditorView.theme({
   ".cm-activeLine": { backgroundColor: "oklch(var(--accent) / 0.4)" },
   ".cm-selectionBackground": { backgroundColor: "oklch(var(--accent) / 0.6) !important" },
   ".cm-error-line": { backgroundColor: "oklch(var(--destructive) / 0.15)" },
+  ".cm-error-mark": {
+    textDecoration: "underline wavy oklch(var(--destructive))",
+    textDecorationSkipInk: "none",
+    textUnderlineOffset: "3px",
+  },
   ".cm-placeholder": { color: "oklch(var(--muted-foreground))" },
 })
 interface JsonCodeEditorProps {
@@ -102,7 +120,7 @@ export function JsonCodeEditor({ value, onChange, errorPosition, placeholder, cl
     const view = viewRef.current
     if (!view) return
     view.dispatch({
-      effects: setErrorEffect.of(errorPosition ? { line: errorPosition.line } : null),
+      effects: setErrorEffect.of(errorPosition ?? null),
     })
   }, [errorPosition])
 
