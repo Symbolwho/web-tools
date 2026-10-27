@@ -167,7 +167,7 @@ export function SvgToolSurface() {
             </Button>
           </div>
 
-          <div className="grid min-h-0 flex-1 gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+          <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] gap-4">
             <section
               className={cn(
                 "flex min-h-0 flex-col rounded-xl border border-border/60 bg-background/65 p-3 shadow-sm",
@@ -254,7 +254,7 @@ export function SvgToolSurface() {
                 <div
                   ref={containerRef}
                   id="svg-preview"
-                  className="mt-3 flex min-h-[20rem] flex-1 items-center justify-center overflow-hidden rounded-lg border border-dashed border-border/70 bg-muted/20 p-4 xl:min-h-0"
+                  className="mt-3 flex min-h-[20rem] flex-1 select-none items-center justify-center overflow-hidden rounded-lg border border-dashed border-border/70 bg-muted/20 p-4 xl:min-h-0"
                   onWheel={previewUrl ? handleWheel : undefined}
                   onPointerDown={previewUrl ? handlePointerDown : undefined}
                   onPointerMove={previewUrl ? handlePointerMove : undefined}
@@ -262,6 +262,8 @@ export function SvgToolSurface() {
                   style={{
                     cursor: isDragging ? "grabbing" : previewUrl ? "grab" : "default",
                     touchAction: "none",
+                    userSelect: "none",
+                    WebkitUserSelect: "none",
                   }}
                 >
                   {!hasSource ? (
